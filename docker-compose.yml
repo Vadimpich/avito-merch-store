@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: avito
+      POSTGRES_PASSWORD: avito_password
+      POSTGRES_DB: avito_merch
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U avito -d avito_merch'" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  fastapi:
+    build: .
+    container_name: fastapi_app
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://avito:avito_password@db:5432/avito_merch
+      SECRET_KEY: mySeCr3t_KEY
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+
+  tests:
+    build: .
+    container_name: fastapi_tests
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://avito:avito_password@db:5432/avito_merch
+      SECRET_KEY: mySeCr3t_KEY
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+    command: pytest --cov=app tests/
+
+  lint:
+    build: .
+    container_name: fastapi_lint
+    command: flake8 app/
+
+volumes:
+  postgres_data:
