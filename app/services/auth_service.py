@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from fastapi import status
+from psycopg2 import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import CustomHTTPException
@@ -14,8 +15,12 @@ def authenticate_or_register_user(db: Session, username: str,
     user = get_user_by_username(db, username)
 
     if not user:
-        hashed_password = hash_password(password)
-        user = create_user(db, username, hashed_password)
+        try:
+            hashed_password = hash_password(password)
+            user = create_user(db, username, hashed_password)
+        except IntegrityError:
+            db.rollback()
+            user = get_user_by_username(db, username)
 
     elif not verify_password(password, user.hashed_password):
         raise CustomHTTPException(status_code=status.HTTP_401_UNAUTHORIZED,

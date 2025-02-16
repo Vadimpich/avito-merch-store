@@ -14,6 +14,10 @@ def process_transfer(db: Session, sender: User, request: SendCoinRequest):
         raise CustomHTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                   message="Получатель не найден")
 
+    if receiver == sender:
+        raise CustomHTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                  message="Нельзя сделать перевод самому себе")
+
     if sender.coins < request.amount:
         raise CustomHTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                   message="Недостаточно монет")

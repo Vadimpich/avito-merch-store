@@ -1,6 +1,7 @@
-from fastapi import HTTPException, status
+from fastapi import status
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import CustomHTTPException
 from app.db.models import User, Transaction
 
 
@@ -18,7 +19,8 @@ def transfer_coins(db: Session, sender: User, receiver: User, amount: int):
 
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Ошибка перевода монет")
+        raise CustomHTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            message="Ошибка перевода монет")
 
     return transaction
