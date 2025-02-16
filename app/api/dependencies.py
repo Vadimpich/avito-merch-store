@@ -1,7 +1,8 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import CustomHTTPException
 from app.core.security import decode_access_token
 from app.db.repository.user_repo import get_user_by_id
 from app.db.session import SessionLocal
@@ -18,9 +19,9 @@ def get_db():
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
+    credentials_exception = CustomHTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Не предоставлены учётные данные",
+        message="Не предоставлены учётные данные",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
